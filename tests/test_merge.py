@@ -137,20 +137,48 @@ class TestDomainLimits(unittest.TestCase):
 
 class TestGroupByTopics(unittest.TestCase):
     def test_groups_correctly(self):
+        """Test that articles are assigned to their highest-priority topic only."""
         articles = [
             {"title": "A", "topics": ["llm", "ai-agent"]},
             {"title": "B", "topics": ["crypto"]},
             {"title": "C", "topics": ["llm"]},
         ]
         groups = group_by_topics(articles)
-        self.assertEqual(len(groups["llm"]), 2)
-        self.assertEqual(len(groups["crypto"]), 1)
-        self.assertIn("ai-agent", groups)
+        
+        # Article A should ONLY be in 'llm' (higher priority), not 'ai-agent'
+        # This is the fix: each article appears in only ONE topic
+        self.assertEqual(len(groups["llm"]), 2)  # Articles A and C
+        self.assertEqual(len(groups["crypto"]), 1)  # Article B
+        
+        # Article A should have primary_topic='llm' and all_topics preserved
+        article_a = next(a for a in groups["llm"] if a["title"] == "A")
+        self.assertEqual(article_a["primary_topic"], "llm")
+        self.assertEqual(article_a["all_topics"], ["llm", "ai-agent"])
+        
+        # ai-agent topic should NOT exist since all its articles went to llm
+        self.assertNotIn("ai-agent", groups)
 
     def test_no_topics_goes_uncategorized(self):
         articles = [{"title": "A", "topics": []}, {"title": "B"}]
         groups = group_by_topics(articles)
         self.assertIn("uncategorized", groups)
+        
+    def test_cross_topic_deduplication(self):
+        """Test that duplicate titles across topics are removed."""
+        articles = [
+            {"title": "Same Article", "topics": ["llm", "ai-agent"], "quality_score": 10},
+            {"title": "Same Article", "topics": ["ai-agent"], "quality_score": 8},
+            {"title": "Different Article", "topics": ["crypto"], "quality_score": 5},
+        ]
+        groups = group_by_topics(articles)
+        
+        # Should have only 2 articles total (1 in llm, 1 in crypto)
+        total = sum(len(articles) for articles in groups.values())
+        self.assertEqual(total, 2)
+        
+        # "Same Article" should be in llm with score 10
+        self.assertEqual(len(groups["llm"]), 1)
+        self.assertEqual(groups["llm"][0]["quality_score"], 10)
 
 
 class TestFixtureData(unittest.TestCase):
