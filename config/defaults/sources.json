@@ -1806,7 +1806,7 @@
         "frontier-tech"
       ],
       "priority": false,
-      "enabled": true
+      "enabled": false
     },
     {
       "id": "xeiaso-rss",
