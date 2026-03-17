@@ -188,8 +188,8 @@ def detect_brave_rate_limit(api_key: str) -> Tuple[int, int]:
     return max(qps, 1), max(workers, 1)
 
 
-def search_brave(query: str, api_key: str, freshness: Optional[str] = None) -> Dict[str, Any]:
-    """Perform search using Brave Search API."""
+def _brave_search_single(query: str, api_key: str, freshness: Optional[str] = None) -> Dict[str, Any]:
+    """Perform a single Brave Search API call with one key."""
     params = {
         'q': query,
         'count': MAX_RESULTS_PER_QUERY,
@@ -209,41 +209,66 @@ def search_brave(query: str, api_key: str, freshness: Optional[str] = None) -> D
         'User-Agent': 'TechDigest/2.0'
     }
     
-    try:
-        req = Request(url, headers=headers)
-        with urlopen(req, timeout=TIMEOUT) as resp:
-            raw = resp.read()
-            # Handle gzip if server sends it anyway
-            if raw[:2] == b'\x1f\x8b':
-                import gzip
-                raw = gzip.decompress(raw)
-            data = json.loads(raw.decode())
-            
-        results = []
-        if 'web' in data and 'results' in data['web']:
-            for result in data['web']['results']:
-                results.append({
-                    'title': result.get('title', ''),
-                    'link': result.get('url', ''),
-                    'snippet': result.get('description', ''),
-                    'date': datetime.now(timezone.utc).isoformat()  # Search timestamp
-                })
-                
-        return {
-            'status': 'ok',
-            'query': query,
-            'results': results,
-            'total': len(results)
-        }
+    req = Request(url, headers=headers)
+    with urlopen(req, timeout=TIMEOUT) as resp:
+        raw = resp.read()
+        # Handle gzip if server sends it anyway
+        if raw[:2] == b'\x1f\x8b':
+            import gzip
+            raw = gzip.decompress(raw)
+        data = json.loads(raw.decode())
         
-    except Exception as e:
-        return {
-            'status': 'error',
-            'query': query,
-            'error': str(e)[:100],
-            'results': [],
-            'total': 0
-        }
+    results = []
+    if 'web' in data and 'results' in data['web']:
+        for result in data['web']['results']:
+            results.append({
+                'title': result.get('title', ''),
+                'link': result.get('url', ''),
+                'snippet': result.get('description', ''),
+                'date': datetime.now(timezone.utc).isoformat()
+            })
+            
+    return {
+        'status': 'ok',
+        'query': query,
+        'results': results,
+        'total': len(results)
+    }
+
+
+# Module-level fallback keys list, set during main()
+_brave_fallback_keys: List[str] = []
+
+
+def search_brave(query: str, api_key: str, freshness: Optional[str] = None) -> Dict[str, Any]:
+    """Perform search using Brave Search API with key rotation on error.
+    
+    Tries the primary key first. On error (429, network, etc.), rotates
+    through _brave_fallback_keys until one succeeds or all fail.
+    """
+    keys_to_try = [api_key] + [k for k in _brave_fallback_keys if k != api_key]
+    
+    last_error = None
+    for i, key in enumerate(keys_to_try):
+        try:
+            return _brave_search_single(query, key, freshness)
+        except HTTPError as e:
+            last_error = f"HTTP {e.code}: {e.reason}"
+            if e.code == 429:
+                logging.warning(f"Brave key #{i} rate limited for query '{query[:50]}', trying next key")
+            else:
+                logging.warning(f"Brave key #{i} error ({last_error}) for query '{query[:50]}', trying next key")
+        except Exception as e:
+            last_error = str(e)[:100]
+            logging.warning(f"Brave key #{i} failed ({last_error}) for query '{query[:50]}', trying next key")
+    
+    return {
+        'status': 'error',
+        'query': query,
+        'error': last_error or 'all keys failed',
+        'results': [],
+        'total': 0
+    }
 
 
 def filter_content(text: str, must_include: List[str], exclude: List[str]) -> bool:
@@ -631,6 +656,9 @@ Examples:
             return 0
         
         elif use_brave:
+            # Set fallback keys for rotation on search errors
+            global _brave_fallback_keys
+            _brave_fallback_keys = brave_keys
             logger.info(f"Using Brave Search API for {len(topics)} topics ({len(brave_keys)} key(s) configured)")
             
             delay = 1.0 / max_qps if max_workers == 1 else 0
