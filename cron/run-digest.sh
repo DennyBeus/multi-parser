@@ -2,12 +2,12 @@
 # Cron wrapper for tech-news-digest pipeline with Postgres storage.
 #
 # Install in crontab:
-#   0 8,20 * * * /home/deploy/tech-news-digest/cron/run-digest.sh >> /var/log/tech-digest/cron.log 2>&1
+#   0 8,20 * * * /home/denis/deploy/tech-news-digest/cron/run-digest.sh >> /home/denis/deploy/tech-news-digest/logs/cron.log 2>&1
 #
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-LOG_DIR="/var/log/tech-digest"
+LOG_DIR="$SCRIPT_DIR/logs"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 
 # Source environment variables
