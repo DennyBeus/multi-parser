@@ -2,7 +2,7 @@
 # Cron wrapper for tech-news-digest pipeline with Postgres storage.
 #
 # Install in crontab:
-#   0 8,20 * * * /home/denis/deploy/tech-news-digest/cron/run-digest.sh >> /home/denis/deploy/tech-news-digest/logs/cron.log 2>&1
+#   0 5,17 * * * /home/denis/deploy/tech-news-digest/cron/run-digest.sh >> /home/denis/deploy/tech-news-digest/logs/cron.log 2>&1
 #
 set -euo pipefail
 
