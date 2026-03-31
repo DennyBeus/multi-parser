@@ -34,10 +34,15 @@ python3 scripts/run-pipeline-db.py \
 
 EXIT_CODE=${PIPESTATUS[0]}
 
-# Cleanup old files
+# Cleanup old tmp files and logs
 find /tmp -name "td-merged-*.json" -mtime +7 -delete 2>/dev/null || true
 find /tmp -name "td-merged-*.meta.json" -mtime +7 -delete 2>/dev/null || true
 find "$LOG_DIR" -name "run-*.log" -mtime +30 -delete 2>/dev/null || true
+
+# Cleanup old DB records (articles older than 30 days)
+if [ $EXIT_CODE -eq 0 ]; then
+    python3 "$SCRIPT_DIR/scripts/cleanup-db.py" --retention-days 90 2>&1 || true
+fi
 
 echo "=== Finished with exit code $EXIT_CODE ==="
 exit $EXIT_CODE

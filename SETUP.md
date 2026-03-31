@@ -128,7 +128,7 @@ python3 db/migrate.py
 python3 db/migrate.py --status   # проверить
 ```
 
-Создаст 3 таблицы: `pipeline_runs`, `articles`, `seen_urls`.
+Создаст 3 таблицы: `pipeline_runs`, `articles`, `seen_urls`, и функцию `cleanup_old_articles()` для удаления старых записей.
 
 ---
 
@@ -214,6 +214,8 @@ mkdir -p logs
 ```bash
 crontab -l
 ```
+
+> Очистка БД встроена в `cron/run-digest.sh` — после каждого успешного запуска pipeline автоматически удаляются статьи старше 90 дней и `seen_urls` старше 180 дней. Отдельной cron-задачи не нужно.
 
 ---
 
