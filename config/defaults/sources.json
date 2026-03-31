@@ -1,6 +1,6 @@
 {
   "_description": "Unified data sources configuration. RSS feeds, Twitter/X KOLs, and web search sources. Each source binds to topics and has enabled/priority fields.",
-  "_updated": "2026-03-29",
+  "_updated": "2026-03-31",
   "_version": "3.0.0",
   "sources": [
     {
@@ -11,7 +11,7 @@
       "enabled": true,
       "priority": true,
       "topics": ["ai"],
-      "note": "LLM/AI tooling, prolific blogger"
+      "note": "LLM/AI tooling"
     },
     {
       "id": "garymarcus-rss",
@@ -21,7 +21,7 @@
       "enabled": true,
       "priority": true,
       "topics": ["ai"],
-      "note": "AI critic, industry analysis"
+      "note": "AI critic"
     },
     {
       "id": "huggingface-rss",
@@ -141,7 +141,7 @@
       "enabled": true,
       "priority": false,
       "topics": ["ai"],
-      "note": "tinygrad, AI infrastructure"
+      "note": "tinygrad"
     },
     {
       "id": "mit-tech-review-rss",
@@ -171,7 +171,7 @@
       "enabled": true,
       "priority": false,
       "topics": ["ai"],
-      "note": "Princeton professor, critical AI perspective"
+      "note": "Princeton professor"
     },
     {
       "id": "nvidia-ai-rss",
@@ -214,7 +214,7 @@
     {
       "id": "sama-twitter",
       "type": "twitter",
-      "name": "Sam Altman (OpenAI CEO)",
+      "name": "Sam Altman",
       "handle": "sama",
       "enabled": true,
       "priority": true,
@@ -240,16 +240,6 @@
       "priority": true,
       "topics": ["ai"],
       "note": "Anthropic official"
-    },
-    {
-      "id": "ylecun-twitter",
-      "type": "twitter",
-      "name": "Yann LeCun (Meta AI)",
-      "handle": "ylecun",
-      "enabled": true,
-      "priority": true,
-      "topics": ["ai"],
-      "note": "Meta AI"
     },
     {
       "id": "mistral-twitter",
@@ -314,7 +304,7 @@
     {
       "id": "jimfan-twitter",
       "type": "twitter",
-      "name": "Jim Fan (NVIDIA)",
+      "name": "Jim Fan",
       "handle": "DrJimFan",
       "enabled": true,
       "priority": true,
@@ -352,34 +342,24 @@
       "note": "LlamaIndex official"
     },
     {
-      "id": "emad-twitter",
-      "type": "twitter",
-      "name": "Emad Mostaque",
-      "handle": "EMostaque",
-      "enabled": true,
-      "priority": false,
-      "topics": ["ai"],
-      "note": "Stability AI"
-    },
-    {
       "id": "sebastian-twitter",
       "type": "twitter",
       "name": "Sebastian Raschka",
       "handle": "rasbt",
       "enabled": true,
-      "priority": false,
+      "priority": true,
       "topics": ["ai"],
       "note": "AI researcher"
     },
     {
       "id": "rowancheung-twitter",
       "type": "twitter",
-      "name": "Rowan Cheung (The Rundown AI)",
+      "name": "Rowan Cheung",
       "handle": "rowancheung",
       "enabled": true,
       "priority": true,
       "topics": ["ai"],
-      "note": "AI newsletter founder, 567K followers"
+      "note": "AI newsletter founder"
     },
     {
       "id": "yudkowsky-twitter",
@@ -387,24 +367,24 @@
       "name": "Eliezer Yudkowsky",
       "handle": "ESYudkowsky",
       "enabled": true,
-      "priority": false,
+      "priority": true,
       "topics": ["ai"],
       "note": "AI safety pioneer"
     },
     {
       "id": "demis-twitter",
       "type": "twitter",
-      "name": "Demis Hassabis (DeepMind CEO)",
+      "name": "Demis Hassabis",
       "handle": "demishassabis",
       "enabled": true,
       "priority": true,
       "topics": ["ai"],
-      "note": "DeepMind CEO, Nobel laureate"
+      "note": "DeepMind CEO"
     },
     {
       "id": "dario-twitter",
       "type": "twitter",
-      "name": "Dario Amodei (Anthropic CEO)",
+      "name": "Dario Amodei",
       "handle": "DarioAmodei",
       "enabled": true,
       "priority": true,
@@ -412,57 +392,40 @@
       "note": "Anthropic CEO"
     },
     {
-      "id": "hwchase-twitter",
-      "type": "twitter",
-      "name": "Harrison Chase (LangChain)",
-      "handle": "hwchase17",
-      "enabled": true,
-      "priority": true,
-      "topics": ["ai"],
-      "note": "LangChain founder, Agent ecosystem"
-    },
-    {
       "id": "swyx-twitter",
       "type": "twitter",
       "name": "Swyx",
       "handle": "swyx",
       "enabled": true,
-      "priority": false,
+      "priority": true,
       "topics": ["ai"],
-      "note": "AI Engineer community, Latent Space podcast"
+      "note": "AI Engineer community"
     },
     {
-      "id": "twitter-clementdelangue",
+      "id": "clementdelangue-twitter",
       "type": "twitter",
       "name": "Clement Delangue",
       "handle": "ClementDelangue",
       "enabled": true,
       "priority": true,
-      "topics": ["ai"]
+      "topics": ["ai"],
+      "note": "Co-founder HuggingFace"
     },
     {
-      "id": "twitter-gaborhm",
+      "id": "gaborhm-twitter",
       "type": "twitter",
       "name": "Greg Brockman",
-      "handle": "GregBrockman",
+      "handle": "gdb",
       "enabled": true,
       "priority": true,
-      "topics": ["ai"]
-    },
-    {
-      "id": "twitter-zuck",
-      "type": "twitter",
-      "name": "Mark Zuckerberg",
-      "handle": "finkd",
-      "enabled": true,
-      "priority": true,
-      "topics": ["ai"]
+      "topics": ["ai"],
+      "note": "Co-Founder OpenAI"
     },
     {
       "id": "openclaw-twitter",
       "type": "twitter",
       "name": "OpenClaw",
-      "handle": "OpenClawAI",
+      "handle": "openclaw",
       "enabled": true,
       "priority": true,
       "topics": ["ai"],
@@ -476,7 +439,207 @@
       "enabled": true,
       "priority": true,
       "topics": ["ai"],
-      "note": "OpenClaw creator, now at OpenAI"
+      "note": "OpenClaw creator"
+    },
+    {
+      "id": "sudosu-twitter",
+      "type": "twitter",
+      "name": "Sudo su",
+      "handle": "sudoingX",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "GPU/local LLM"
+    },
+    {
+      "id": "volkov-twitter",
+      "type": "twitter",
+      "name": "Alex Volkov",
+      "handle": "altryne",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "AI blogger"
+    },
+    {
+      "id": "rauch-twitter",
+      "type": "twitter",
+      "name": "Guillermo Rauch",
+      "handle": "rauchg",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "CEO Versel"
+    },
+    {
+      "id": "ry-twitter",
+      "type": "twitter",
+      "name": "ry",
+      "handle": "rywalker",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "CEO astronomerio"
+    },
+    {
+      "id": "hm-twitter",
+      "type": "twitter",
+      "name": "Hugging Models",
+      "handle": "HuggingModels",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "Open-Source models"
+    },
+    {
+      "id": "unsloth-twitter",
+      "type": "twitter",
+      "name": "Unsloth AI",
+      "handle": "UnslothAI",
+      "enabled": true,
+      "priority": false,
+      "topics": ["ai"],
+      "note": "Train and run models locally"
+    },
+    {
+      "id": "therundown-twitter",
+      "type": "twitter",
+      "name": "The Rundown AI",
+      "handle": "TheRundownAI",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "AI newsletter"
+    },
+    {
+      "id": "viv-twitter",
+      "type": "twitter",
+      "name": "Viv",
+      "handle": "Vtrivedy10",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "agents & evals"
+    },
+    {
+      "id": "kanika-twitter",
+      "type": "twitter",
+      "name": "Kanika",
+      "handle": "KanikaBK",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "AI Simplifier"
+    },
+    {
+      "id": "research-twitter",
+      "type": "twitter",
+      "name": "Google Research",
+      "handle": "GoogleResearch",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "Google Research official"
+    },
+    {
+      "id": "akshay-twitter",
+      "type": "twitter",
+      "name": "Akshay",
+      "handle": "akshay_pachaar",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "Simplifying LLMs"
+    },
+    {
+      "id": "chawla-twitter",
+      "type": "twitter",
+      "name": "Avi Chawla",
+      "handle": "_avichawla",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "Daily tutorials"
+    },
+    {
+      "id": "toor-twitter",
+      "type": "twitter",
+      "name": "Hasan Toor",
+      "handle": "hasantoxr",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "AI & Tech Educator"
+    },
+    {
+      "id": "ronin-twitter",
+      "type": "twitter",
+      "name": "Ronin",
+      "handle": "DeRonin_",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "CEO of Close AI"
+    },
+    {
+      "id": "patel-twitter",
+      "type": "twitter",
+      "name": "Om Patel",
+      "handle": "om_patel5",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "saas dev"
+    },
+    {
+      "id": "claude-twitter",
+      "type": "twitter",
+      "name": "Claude",
+      "handle": "claudeai",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "Claude official"
+    },
+    {
+      "id": "sutskever-twitter",
+      "type": "twitter",
+      "name": "Ilya Sutskever",
+      "handle": "ilyasut",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "SSI"
+    },
+    {
+      "id": "leerobinson-twitter",
+      "type": "twitter",
+      "name": "Lee Robinson",
+      "handle": "leerob",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "CursorAI dev"
+    },
+    {
+      "id": "dogan-twitter",
+      "type": "twitter",
+      "name": "Jaana Dogan",
+      "handle": "rakyll",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "Engineer at Google"
+    },
+    {
+      "id": "carr-twitter",
+      "type": "twitter",
+      "name": "Andrew Carr",
+      "handle": "andrew_n_carr",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai"],
+      "note": "co-founder leading science"
     },
     {
       "id": "pytorch-github",
@@ -534,7 +697,7 @@
       "name": "vLLM",
       "repo": "vllm-project/vllm",
       "enabled": true,
-      "priority": false,
+      "priority": true,
       "topics": ["ai"],
       "note": "High-throughput LLM inference engine"
     },
@@ -609,49 +772,52 @@
       "note": "Lightweight AI agent framework"
     },
     {
-      "id": "github-mcp-servers",
+      "id": "mcp-servers-github",
       "type": "github",
       "name": "MCP Servers",
       "repo": "modelcontextprotocol/servers",
       "enabled": true,
       "priority": true,
-      "topics": ["ai"]
+      "topics": ["ai"],
+      "note": "Model Context Protocol Servers"
     },
     {
-      "id": "github-deepseek-v3",
+      "id": "deepseek-v3-github",
       "type": "github",
       "name": "DeepSeek V3",
       "repo": "deepseek-ai/DeepSeek-V3",
       "enabled": true,
       "priority": true,
-      "topics": ["ai"]
+      "topics": ["ai"],
+      "note": "DeepSeek-V3"
     },
     {
-      "id": "github-meta-llama",
+      "id": "meta-llama-github",
       "type": "github",
       "name": "Meta Llama",
       "repo": "meta-llama/llama-models",
       "enabled": true,
       "priority": true,
-      "topics": ["ai"]
+      "topics": ["ai"],
+      "note": "Utilities intended for use with Llama models"
     },
     {
       "id": "mem0-github",
       "type": "github",
-      "repo": "mem0ai/mem0",
       "name": "Mem0",
+      "repo": "mem0ai/mem0",
       "enabled": true,
-      "priority": false,
+      "priority": true,
       "topics": ["ai"],
       "note": "Memory layer for AI agents"
     },
     {
       "id": "openviking-github",
       "type": "github",
-      "repo": "volcengine/OpenViking",
       "name": "OpenViking",
+      "repo": "volcengine/OpenViking",
       "enabled": true,
-      "priority": false,
+      "priority": true,
       "topics": ["ai"],
       "note": "Volcengine/ByteDance open-source LLM"
     },
@@ -661,12 +827,12 @@
       "name": "HKUDS NanoBot",
       "repo": "HKUDS/nanobot",
       "enabled": true,
-      "priority": false,
+      "priority": true,
       "topics": ["ai"],
       "note": "HKUDS NanoBot AI agent project"
     },
     {
-      "id": "reddit-machinelearning",
+      "id": "machinelearning-reddit",
       "type": "reddit",
       "name": "r/MachineLearning",
       "subreddit": "MachineLearning",
@@ -678,7 +844,7 @@
       "topics": ["ai"]
     },
     {
-      "id": "reddit-localllama",
+      "id": "localllama-reddit",
       "type": "reddit",
       "name": "r/LocalLLaMA",
       "subreddit": "LocalLLaMA",
@@ -686,11 +852,11 @@
       "limit": 25,
       "min_score": 30,
       "enabled": true,
-      "priority": false,
+      "priority": true,
       "topics": ["ai"]
     },
     {
-      "id": "reddit-artificial",
+      "id": "artificial-reddit",
       "type": "reddit",
       "name": "r/artificial",
       "subreddit": "artificial",
@@ -698,11 +864,11 @@
       "limit": 25,
       "min_score": 30,
       "enabled": true,
-      "priority": false,
+      "priority": true,
       "topics": ["ai"]
     },
     {
-      "id": "reddit-chatgpt",
+      "id": "chatgpt-reddit",
       "type": "reddit",
       "name": "r/ChatGPT",
       "subreddit": "ChatGPT",
@@ -714,7 +880,7 @@
       "topics": ["ai"]
     },
     {
-      "id": "reddit-singularity",
+      "id": "singularity-reddit",
       "type": "reddit",
       "name": "r/singularity",
       "subreddit": "singularity",
@@ -726,7 +892,7 @@
       "topics": ["ai"]
     },
     {
-      "id": "reddit-openai",
+      "id": "openai-reddit",
       "type": "reddit",
       "name": "r/OpenAI",
       "subreddit": "OpenAI",
@@ -738,7 +904,7 @@
       "topics": ["ai"]
     },
     {
-      "id": "reddit-anthropic",
+      "id": "anthropic-reddit",
       "type": "reddit",
       "name": "r/Anthropic",
       "subreddit": "Anthropic",
@@ -750,7 +916,7 @@
       "topics": ["ai"]
     },
     {
-      "id": "reddit-experienceddevs",
+      "id": "experienceddevs-reddit",
       "type": "reddit",
       "name": "r/ExperiencedDevs",
       "subreddit": "ExperiencedDevs",
