@@ -1,5 +1,5 @@
 -- 001_initial.sql
--- Core schema for tech-news-digest pipeline storage
+-- Core schema for multi-parser pipeline storage
 
 CREATE TABLE pipeline_runs (
     id              SERIAL PRIMARY KEY,

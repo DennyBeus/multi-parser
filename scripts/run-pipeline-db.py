@@ -79,7 +79,7 @@ def update_pipeline_run(conn, run_id: int, status: str, total_merged: int = 0,
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Run tech-news-digest pipeline with Postgres storage.",
+        description="Run multi-parser pipeline with Postgres storage.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     _script_dir = Path(__file__).resolve().parent

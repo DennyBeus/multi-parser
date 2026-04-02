@@ -39,7 +39,7 @@ RETRY_DELAY = 2.0
 # Brave Search API
 BRAVE_API_BASE = "https://api.search.brave.com/res/v1/web/search"
 TAVILY_API_BASE = "https://api.tavily.com/search"
-BRAVE_RATE_LIMIT_CACHE = "/tmp/tech-news-digest-brave-rate-limit.json"
+BRAVE_RATE_LIMIT_CACHE = "/tmp/multi-parser-brave-rate-limit.json"
 
 
 def setup_logging(verbose: bool) -> logging.Logger:
@@ -573,7 +573,7 @@ Examples:
     
     # Auto-generate unique output path if not specified
     if not args.output:
-        fd, temp_path = tempfile.mkstemp(prefix="tech-news-digest-web-", suffix=".json")
+        fd, temp_path = tempfile.mkstemp(prefix="multi-parser-web-", suffix=".json")
         os.close(fd)
         args.output = Path(temp_path)
     

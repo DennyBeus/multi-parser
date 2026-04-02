@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unified data collection pipeline for tech-news-digest.
+Unified data collection pipeline for multi-parser.
 
 Runs all 6 fetch steps (RSS, Twitter, GitHub, GitHub Trending, Reddit, Web) in parallel,
 then merges + deduplicates + scores into a single output JSON.
@@ -13,7 +13,7 @@ Usage:
       --defaults <SKILL_DIR>/config/defaults \
       --config <WORKSPACE>/config \
       --hours 48 --freshness pd \
-      --archive-dir <WORKSPACE>/archive/tech-news-digest/ \
+      --archive-dir <WORKSPACE>/archive/multi-parser/ \
       --output /tmp/td-merged.json \
       --verbose
 """
@@ -120,7 +120,7 @@ def run_step(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Run the full tech-news-digest data pipeline in one shot.",
+        description="Run the full multi-parser data pipeline in one shot.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     _script_dir = Path(__file__).resolve().parent

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple schema migration runner for tech-news-digest.
+Simple schema migration runner for multi-parser.
 
 Reads SQL files from db/migrations/ in alphabetical order,
 tracks applied migrations in a schema_migrations table.

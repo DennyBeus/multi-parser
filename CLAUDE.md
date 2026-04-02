@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Tech News Digest is an automated tech news aggregation pipeline that collects articles from 6 source types (RSS, Twitter/X, GitHub releases, GitHub trending, Reddit, web search), applies quality scoring, deduplicates, and stores results in Postgres. Runs on VPS via cron — no LLM in the data pipeline. Python 3.8+, minimal dependencies.
+Multi-Parser is an automated tech news aggregation pipeline that collects articles from 6 source types (RSS, Twitter/X, GitHub releases, GitHub trending, Reddit, web search), applies quality scoring, deduplicates, and stores results in Postgres. Runs on VPS via cron — no LLM in the data pipeline. Python 3.8+, minimal dependencies.
 
 ## Commands
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Shared Postgres connection helper for tech-news-digest.
+Shared Postgres connection helper for multi-parser.
 
 Reads DATABASE_URL from environment. Used by store-merged.py,
 run-pipeline-db.py, and merge-sources.py (--db-dedup).

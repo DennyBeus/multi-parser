@@ -1,4 +1,4 @@
-# Настройка tech-news-digest на сервере
+# Настройка multi-parser на сервере
 
 > Статус: **в процессе** — не настроено, требует выполнения всех шагов
 
@@ -35,7 +35,7 @@ sudo apt install python3-pip -y
 ## Шаг 2 — Установить зависимости Python
 
 ```bash
-cd ~/deploy/tech-news-digest
+cd ~/deploy/multi-parser
 pip3 install -r requirements.txt
 ```
 
@@ -86,7 +86,7 @@ docker ps   # не должно быть ошибки "permission denied"
 ## Шаг 4 — Создать .env файл
 
 ```bash
-cd ~/deploy/tech-news-digest
+cd ~/deploy/multi-parser
 nano .env
 ```
 
@@ -114,7 +114,7 @@ GITHUB_TOKEN=
 ## Шаг 5 — Запустить PostgreSQL через Docker
 
 ```bash
-cd ~/deploy/tech-news-digest
+cd ~/deploy/multi-parser
 docker-compose up -d
 docker-compose ps   # проверить что запустилось
 ```
@@ -204,7 +204,7 @@ python3 scripts/run-pipeline-db.py --hours 48 --output /tmp/td-merged.json --ver
 Выполнять из папки проекта — `$(pwd)` автоматически подставит правильный путь:
 
 ```bash
-cd ~/deploy/tech-news-digest
+cd ~/deploy/multi-parser
 chmod +x cron/run-digest.sh
 mkdir -p logs
 (crontab -l 2>/dev/null; echo "0 8,20 * * * $(pwd)/cron/run-digest.sh >> $(pwd)/logs/cron.log 2>&1") | crontab -

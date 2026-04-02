@@ -1,8 +1,8 @@
 #!/bin/bash
-# Cron wrapper for tech-news-digest pipeline with Postgres storage.
+# Cron wrapper for multi-parser pipeline with Postgres storage.
 #
 # Install in crontab:
-#   0 5,17 * * * /home/denis/deploy/tech-news-digest/cron/run-digest.sh >> /home/denis/deploy/tech-news-digest/logs/cron.log 2>&1
+#   0 5,17 * * * /home/denis/deploy/multi-parser/cron/run-digest.sh >> /home/denis/deploy/multi-parser/logs/cron.log 2>&1
 #
 set -euo pipefail
 
