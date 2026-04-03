@@ -25,3 +25,6 @@ multi-parser-merged-*.json
 .env
 docker-compose.override.yml
 /venv*/
+
+# .md files
+README_EXAMPLE.md

@@ -5,8 +5,8 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: multi_parser
-      POSTGRES_USER: multi
+      POSTGRES_DB: ${POSTGRES_DB:-multi_parser}
+      POSTGRES_USER: ${POSTGRES_USER:-multi_parser_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "127.0.0.1:5432:5432"
@@ -20,7 +20,7 @@ services:
       -c maintenance_work_mem=64MB
       -c max_connections=20
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U digest -d multi_parser"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-multi_parser_user} -d ${POSTGRES_DB:-multi_parser}"]
       interval: 10s
       timeout: 5s
       retries: 5
