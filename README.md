@@ -1,149 +1,288 @@
 # Multi-Parser
 
-> Automated tech news digest — 151 sources, 6-source pipeline, one chat message to install.
+<p align="center">
+  <strong>Deterministic tech news aggregator — cheap, accurate, zero LLM tokens in the pipeline.</strong>
+</p>
 
-**English** | [中文](README_CN.md)
+<p align="center">
+  <a href="https://github.com/DennyBeus/multi-parser/actions/workflows/test.yml?branch=main"><img src="https://img.shields.io/github/actions/workflow/status/DennyBeus/multi-parser/test.yml?branch=main&style=for-the-badge" alt="CI status"></a>
+  <a href="https://github.com/DennyBeus/multi-parser/releases"><img src="https://img.shields.io/github/v/release/DennyBeus/multi-parser?include_prereleases&style=for-the-badge" alt="GitHub release"></a>
+  <a href="https://img.shields.io/badge/python-3.8+-blue"><img src="https://img.shields.io/badge/python-3.8+-blue.svg?style=for-the-badge" alt="Python 3.8+"></a>
+</p>
 
-[![Tests](https://github.com/draco-agent/multi-parser/actions/workflows/test.yml/badge.svg)](https://github.com/draco-agent/multi-parser/actions/workflows/test.yml)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![ClawHub](https://img.shields.io/badge/ClawHub-tech--news--digest-blueviolet)](https://clawhub.com/draco-agent/multi-parser)
-[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+**English** | [Русский](README_RU.md)
 
-## 💬 Install in One Message
+## Why Multi-Parser?
 
-Tell your [OpenClaw](https://openclaw.ai) AI assistant:
+Multi-Parser was built as a **cheap and deterministic replacement** for an AI agent's daily digest skill. Instead of burning LLM tokens on fetching, filtering, and deduplicating news, this pipeline does it all with pure Python — no LLM calls, no hallucinations, no wasted tokens.
 
-> **"Install multi-parser and send a daily digest to #tech-news every morning at 9am"**
+**The parser and the agent work separately.** The pipeline writes structured data to Postgres; the agent reads from the database when it's time to compose a digest. This means zero extra token spend on data collection — the agent only uses tokens for the final summary and delivery.
 
-That's it. Your bot handles installation, configuration, scheduling, and delivery — all through conversation.
+> Agent configuration for working with this pipeline will be published in a separate repository.
 
-More examples:
+## What It Does
 
-> 🗣️ "Set up a weekly AI digest, only LLM and AI Agent topics, deliver to Discord #ai-weekly every Monday"
+Collects tech news from **93 sources** across 5 source types, scores and deduplicates them, and stores the result in PostgreSQL — ready for any downstream consumer.
 
-> 🗣️ "Install multi-parser, add my RSS feeds, and send crypto news to Telegram"
+| Source Type | Count | Examples |
+|---|---|---|
+| RSS | 21 feeds | Simon Willison, Hugging Face, OpenAI, The Verge AI, Ars Technica... |
+| Twitter/X | 45 KOLs | @karpathy, @sama, @elonmusk, @VitalikButerin, @AndrewYNg... |
+| GitHub | 19 repos | LangChain, vLLM, DeepSeek, Llama, Ollama, Open WebUI... |
+| Reddit | 8 subs | r/MachineLearning, r/LocalLLaMA, r/artificial... |
+| Web Search | topic-based | Brave Search or Tavily API with freshness filters |
 
-> 🗣️ "Give me a tech digest right now, skip Twitter sources"
+## Pipeline
 
-Or install via CLI:
+```
+cron/run-digest.sh (every 12h)
+       │
+       ▼
+ run-pipeline-db.py
+   ├── pipeline_runs → INSERT (status='running')
+   ├── run-pipeline.py
+   │     ├── fetch-rss.py ──────┐
+   │     ├── fetch-twitter.py ──┤
+   │     ├── fetch-github.py ───┤  parallel fetch (~30s)
+   │     ├── fetch-github.py ───┤  (--trending)
+   │     ├── fetch-reddit.py  ──┤
+   │     └── fetch-web.py ──────┘
+   │              │
+   │              ▼
+   │     merge-sources.py
+   │     (URL dedup → title similarity → cross-topic dedup → quality scoring)
+   │              │
+   │              ▼
+   │     enrich-articles.py (optional, full-text for top articles)
+   │              │
+   │              ▼
+   │     merged JSON output
+   ├── store-merged.py → PostgreSQL (articles + seen_urls)
+   └── pipeline_runs → UPDATE (status='ok')
+```
+
+### Quality Scoring
+
+| Signal | Score | Condition |
+|---|---|---|
+| Multi-source cross-ref | +5 | Same story from 2+ source types |
+| Priority source | +3 | Key blogs/accounts |
+| Recency | +2 | Published < 24h ago |
+| Twitter engagement | +1 to +5 | Tiered by likes/retweets |
+| Reddit score | +1 to +5 | Tiered by upvotes |
+| Duplicate | -10 | Same URL seen |
+| Already reported | -5 | URL in seen_urls (last 14 days) |
+
+### Deduplication
+
+Three-phase dedup: **URL normalization** → **title similarity** (0.75 threshold via SequenceMatcher with token-based bucketing) → **cross-topic dedup** (each article appears in one topic only). Domain limit: max 3 articles per domain per topic (exempt: x.com, github.com, reddit.com).
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.8+
+- Docker & Docker Compose (for PostgreSQL)
+- At least one API key for Twitter or Web Search (optional but recommended)
+
+### Automated Setup (VPS / Linux)
+
+The `run-setup.sh` script handles everything in one run — ideal for a fresh VPS:
+
 ```bash
-clawhub install multi-parser
+git clone https://github.com/DennyBeus/multi-parser.git
+cd multi-parser
+
+# 1. Configure environment
+cp .env.example .env
+nano .env    # set POSTGRES_PASSWORD and DATABASE_URL at minimum
+
+# 2. Run setup (installs deps, starts Postgres, applies migrations, sets up cron)
+chmod +x run-setup.sh
+./run-setup.sh
 ```
 
-## 📊 What You Get
+The script is idempotent — safe to re-run. It will:
+1. Install `python3-pip`, `docker.io`, `docker-compose`, `apparmor`
+2. Add current user to the `docker` group
+3. Install Python dependencies from `requirements.txt`
+4. Start PostgreSQL 16 via Docker Compose
+5. Apply database migrations
+6. Validate config
+7. Set up cron (05:00 and 17:00 UTC daily)
 
-A quality-scored, deduplicated tech digest built from **151 sources**:
-
-| Layer | Sources | What |
-|-------|---------|------|
-| 📡 RSS | 49 feeds | OpenAI, Anthropic, Ben's Bites, HN, 36氪, CoinDesk… |
-| 🐦 Twitter/X | 48 KOLs | @karpathy, @VitalikButerin, @sama, @elonmusk… |
-| 🔍 Web Search | 4 topics | Tavily or Brave Search API with freshness filters |
-| 🐙 GitHub | 28 repos | Releases from key projects (LangChain, vLLM, DeepSeek, Llama…) |
-| 🗣️ Reddit | 13 subs | r/MachineLearning, r/LocalLLaMA, r/CryptoCurrency… |
-
-### Pipeline
-
-```
-       run-pipeline.py (~30s)
-              ↓
-  RSS ────────┐
-  Twitter ────┤
-  Web ────────┤── parallel fetch ──→ merge-sources.py
-  GitHub ─────┤                          ↓
-  GitHub Tr. ─┤              enrich-articles.py (opt-in)
-  Reddit ─────┘                          ↓
-              Quality Scoring → Dedup → Topic Grouping
-                             ↓
-               Discord / Email / PDF output
-```
-
-**Quality scoring**: priority source (+3), multi-source cross-ref (+5), recency (+2), engagement (+1), Reddit score bonus (+1/+3/+5), already reported (-5).
-
-## ⚙️ Configuration
-
-- `config/defaults/sources.json` — 151 built-in sources (62 RSS, 48 Twitter, 28 GitHub, 13 Reddit)
-- `config/defaults/topics.json` — 4 topics with search queries & Twitter queries
-- User overrides in `workspace/config/` take priority
-
-## 🎨 Customize Your Sources
-
-Works out of the box with 151 built-in sources (62 RSS, 48 Twitter, 28 GitHub, 13 Reddit) — but fully customizable. Copy the defaults to your workspace config and override:
+### Manual Setup
 
 ```bash
-# Copy and customize
-cp config/defaults/sources.json workspace/config/multi-parser-sources.json
-cp config/defaults/topics.json workspace/config/multi-parser-topics.json
+# Install dependencies
+pip install -r requirements.txt
+
+# Start PostgreSQL
+docker-compose up -d
+
+# Apply migrations
+python db/migrate.py
+
+# Validate config
+python scripts/validate-config.py config/defaults
+
+# Test run (JSON only, no DB)
+python scripts/run-pipeline.py --only rss,github --output /tmp/test-digest.json
+
+# Full run with DB storage
+python scripts/run-pipeline-db.py --hours 48 --output /tmp/digest.json --verbose
 ```
 
-Your overlay file **merges** with defaults:
-- **Override** a source by matching its `id` — your version replaces the default
-- **Add** new sources with a unique `id` — appended to the list
-- **Disable** a built-in source — set `"enabled": false` on the matching `id`
+## Environment Variables
+
+All API keys are optional. The pipeline runs with whatever sources are available.
+
+```bash
+# PostgreSQL (required for DB mode)
+POSTGRES_PASSWORD=your_password
+DATABASE_URL=postgresql://multi_parser_user:your_password@127.0.0.1:5432/multi_parser
+
+# Twitter/X — at least one recommended (auto priority: getxapi > twitterapiio > official)
+GETX_API_KEY=
+TWITTERAPI_IO_KEY=
+X_BEARER_TOKEN=
+
+# Web Search — at least one recommended (auto: brave > tavily)
+BRAVE_API_KEYS=k1,k2,k3    # comma-separated for rotation
+TAVILY_API_KEY=
+
+# GitHub — optional, improves rate limits
+GITHUB_TOKEN=
+```
+
+## Configuration
+
+### Sources & Topics
+
+- `config/defaults/sources.json` — 93 built-in sources (21 RSS, 45 Twitter, 19 GitHub, 8 Reddit)
+- `config/defaults/topics.json` — topic definitions with search queries and keyword filters
+
+User overrides in `workspace/config/` take priority. Your overlay **merges** with defaults:
 
 ```json
 {
   "sources": [
-    {"id": "my-blog", "type": "rss", "enabled": true, "url": "https://myblog.com/feed", "topics": ["llm"]},
+    {"id": "my-blog", "type": "rss", "enabled": true, "url": "https://myblog.com/feed"},
     {"id": "openai-blog", "enabled": false}
   ]
 }
 ```
 
-No need to copy the entire file — just include what you want to change.
+- **Override** a source by matching its `id`
+- **Add** new sources with a unique `id`
+- **Disable** a built-in source with `"enabled": false`
 
-## 🔧 Environment Variables
+### Cron Schedule
 
-All environment variables are optional. The pipeline runs with whatever sources are available.
-
-```bash
-# Twitter/X Backend (auto priority: getxapi > twitterapiio > official)
-export GETX_API_KEY="..."        # GetXAPI
-export TWITTERAPI_IO_KEY="..."   # twitterapi.io
-export X_BEARER_TOKEN="..."      # Official X API v2
-export TWITTER_API_BACKEND="auto"  # auto|getxapi|twitterapiio|official
-# Web Search
-export TAVILY_API_KEY="tvly-xxx"   # Tavily Search API
-export BRAVE_API_KEYS="k1,k2,k3"   # Brave Search API keys (comma-separated for rotation)
-export BRAVE_API_KEY="..."         # Single Brave key
-export WEB_SEARCH_BACKEND="auto"   # auto|brave|tavily
-# GitHub
-export GITHUB_TOKEN="..."          # GitHub API
-# Other
-export BRAVE_PLAN="free"           # Override Brave rate limit: free|pro
-```
-
-## 📦 Dependencies
-
-### Core (required)
-
-The skill requires Python 3.8+ and two optional dependencies for enhanced functionality:
+Default: every 12 hours (05:00 and 17:00 UTC). Change in `run-setup.sh` before running:
 
 ```bash
-pip install -r requirements.txt
-# or
-pip install feedparser>=6.0.0 jsonschema>=4.0.0
+CRON_SCHEDULE="0 5,17 * * *"
 ```
 
-- **feedparser** — RSS/Atom feed parsing (fallback to regex if not installed)
-- **jsonschema** — JSON Schema validation for config files
+## Database
 
-### Optional
+PostgreSQL 16 (Docker) with 3 tables:
+
+| Table | Purpose |
+|---|---|
+| `pipeline_runs` | Tracks each cron execution (timing, status, error) |
+| `articles` | Merged/scored articles per run (UNIQUE on run_id + normalized_url) |
+| `seen_urls` | Cross-run dedup — replaces archive scanning |
+
+Auto-cleanup: articles older than 90 days and seen_urls older than 180 days are removed after each pipeline run.
+
+Memory tuning for 4GB RAM VPS is pre-configured in `docker-compose.yml` (256MB shared_buffers, 20 max connections).
+
+## Project Structure
+
+```
+multi-parser/
+├── config/
+│   ├── defaults/
+│   │   ├── sources.json          # 93 built-in sources
+│   │   └── topics.json           # topic definitions & search queries
+│   └── schema.json               # JSON Schema for config validation
+├── cron/
+│   └── run-digest.sh             # cron wrapper (every 12h)
+├── db/
+│   ├── migrate.py                # migration runner
+│   └── migrations/
+│       ├── 001_initial.sql       # core schema (3 tables + indexes)
+│       └── 002_cleanup_retention.sql  # auto-cleanup function
+├── scripts/
+│   ├── run-pipeline.py           # main orchestrator (parallel fetch)
+│   ├── run-pipeline-db.py        # DB wrapper (pipeline + storage)
+│   ├── fetch-rss.py              # RSS/Atom feed fetcher
+│   ├── fetch-twitter.py          # Twitter/X fetcher (3 backends)
+│   ├── fetch-github.py           # GitHub releases + trending
+│   ├── fetch-reddit.py           # Reddit public API
+│   ├── fetch-web.py              # Brave/Tavily web search
+│   ├── merge-sources.py          # dedup + quality scoring engine
+│   ├── enrich-articles.py        # optional full-text enrichment
+│   ├── store-merged.py           # JSON → PostgreSQL
+│   ├── config_loader.py          # two-layer config overlay
+│   ├── db_conn.py                # database connection helper
+│   ├── cleanup-db.py             # manual DB cleanup
+│   ├── source-health.py          # source availability checker
+│   ├── validate-config.py        # config validation
+│   └── delivery/                 # Phase 2: output formatters
+│       ├── generate-pdf.py
+│       ├── sanitize-html.py
+│       └── send-email.py
+├── tests/
+│   ├── test_config.py
+│   ├── test_db.py
+│   ├── test_merge.py
+│   └── fixtures/                 # sample data for each source type
+├── docker-compose.yml            # PostgreSQL 16 + tuning
+├── requirements.txt              # 4 dependencies
+├── run-setup.sh                  # one-shot VPS setup
+├── .env.example                  # environment template
+└── .github/workflows/test.yml    # CI: Python 3.9 + 3.12
+```
+
+## Dependencies
+
+Minimal by design — 4 packages:
+
+```
+feedparser>=6.0.0        # RSS/Atom parsing (fallback to regex if missing)
+jsonschema>=4.0.0        # config validation
+psycopg2-binary>=2.9.0   # PostgreSQL driver
+python-dotenv>=1.0.0     # .env file loading
+```
+
+## Running Individual Fetchers
+
+Each fetch script works standalone:
 
 ```bash
-pip install weasyprint
+python scripts/fetch-rss.py --defaults config/defaults --output rss.json
+python scripts/fetch-twitter.py --defaults config/defaults --output twitter.json --hours 48
+python scripts/fetch-github.py --defaults config/defaults --output github.json
+python scripts/fetch-reddit.py --defaults config/defaults --output reddit.json
+python scripts/fetch-web.py --defaults config/defaults --output web.json
 ```
 
-- **weasyprint** — Enables PDF report generation
+## Tests
 
-## 📂 Repository
+```bash
+# All tests
+python -m unittest discover -s tests -v
 
-**GitHub**: [github.com/draco-agent/multi-parser](https://github.com/draco-agent/multi-parser)
+# Single test file
+python -m unittest tests/test_merge.py -v
+python -m unittest tests/test_db.py -v
+```
 
-## 🌟 Featured In
+CI runs on Python 3.9 and 3.12 via GitHub Actions.
 
-- [Awesome OpenClaw Use Cases](https://github.com/hesamsheikh/awesome-openclaw-usecases) — Community-curated collection of OpenClaw agent use cases
+## Origin
 
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE) for details.
+Forked from [draco-agent/tech-news-digest](https://github.com/draco-agent/tech-news-digest) and reworked: consolidated to a single AI topic, updated sources, added automated VPS setup, and adapted for use as a standalone data backend for an AI agent's daily digest workflow.
