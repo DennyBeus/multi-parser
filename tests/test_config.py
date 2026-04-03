@@ -105,7 +105,7 @@ class TestSourceCounts(unittest.TestCase):
     def test_twitter_count(self):
         sources = load_merged_sources(DEFAULTS_DIR)
         tw = [s for s in sources if s["type"] == "twitter"]
-        self.assertEqual(len(tw), 27)
+        self.assertEqual(len(tw), 45)
 
     def test_rss_count(self):
         sources = load_merged_sources(DEFAULTS_DIR)
