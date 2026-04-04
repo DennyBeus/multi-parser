@@ -184,7 +184,7 @@ fi
 $DC up -d
 
 # Wait for healthcheck to pass (up to 60s)
-info "Waiting for Postgres to be ready..."
+info "Waiting for Postgres to be ready... (wait 60s)"
 for i in $(seq 1 30); do
     STATUS=$($DC ps --format json 2>/dev/null | python3 -c "
 import sys, json
