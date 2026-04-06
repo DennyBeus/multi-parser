@@ -45,10 +45,11 @@ Multi-Parser собирает новости по AI тематике из **91 
 | Reddit | 8 | r/MachineLearning, r/LocalLLaMA, r/artificial... |
 | Веб-поиск | по топикам | Brave Search или Tavily API с фильтрами свежести |
 
-Особый акцент я старался делать на источниках, которые в своих текстах не просто пересказывают новость (весь твиттер этим болен), а рождают уникальную идею или мысль.
+Особый акцент я старался делать на источниках, которые в своих текстах не просто пересказывают новость (весь твиттер этим болен), а рождают уникальную мысль/идею или являются дефолтным первоисточником новости.
 
 ## Пайплайн
 
+Пайплайн очень простой и начинается с обычной cron задачи, которая по расписанию запускает python скрипты для каждого источника, далее другие скрипты фильтуют, дедуплицируют и делают скоринг качества спарсенной информации, после чего формируется конечный json файл, который просто встраивается в БД.
 ```
 cron/run-digest.sh (every 12h)
        │
@@ -78,6 +79,8 @@ cron/run-digest.sh (every 12h)
 
 ### Скоринг качества
 
+В проекте существует система скоринга для того чтобы в конечный дайджест с наибольшей вероятностью попадали только актуальные и свежие новости. 
+
 | Сигнал | Баллы | Условие |
 |---|---|---|
 | Кросс-источник | +5 | Одна новость из 2+ типов источников |
@@ -88,36 +91,64 @@ cron/run-digest.sh (every 12h)
 | Дубликат | -10 | Тот же URL уже есть |
 | Уже публиковалось | -5 | URL в seen_urls (последние 14 дней) |
 
-### Дедупликация
-
-Три фазы: **нормализация URL** → **схожесть заголовков** (порог 0.75 через SequenceMatcher с токен-бакетами) → **кросс-топик дедупликация** (каждая статья только в одном топике). Лимит домена: максимум 3 статьи с одного домена на топик (исключения: x.com, github.com, reddit.com).
-
 ## Быстрый старт
 
 ### Требования
 
-- Python 3.8+
-- Docker и Docker Compose (для PostgreSQL)
+Минимальный старт:
+- Наличие небольшого сервера с Linux (VPS)
 - Хотя бы один API-ключ для Twitter или веб-поиска (опционально, но рекомендуется)
+
+Для твиттера я рекомендую использовать дешёвый сервис [twitterapi.io](http://twitterapi.io/?ref=dennybeus).
+Для веб-поиска я юзаю бесплатный API от [tavily.com](https://app.tavily.com/home).
+
+### Настройка переменых окружения
+
+Все API-ключи опциональны. Пайплайн может работать с тем что есть, но настоятельно рекомендую вставить в `.env` файл:
+- `TWITTERAPI_IO_KEY`
+- `TAVILY_API_KEY` (1000 бесплатных токенов в месяц)
+- `GITHUB_TOKEN` (обходит ограничение по времени)
+
+и обязательно отредактировать поля:
+- `POSTGRES_USER` (замените в multi_parser_user в конце `user` на ваше имя)
+- `POSTGRES_PASSWORD` (установите свой пароль)
+- `DATABASE_URL` (замените multi_parser_user и changeme на ваши `POSTGRES_USER` и `POSTGRES_PASSWORD` соответсвенно)
+
+```bash
+# =============================================================================
+# Postgres — must match values in docker-compose.yml
+# =============================================================================
+POSTGRES_DB=multi_parser
+POSTGRES_USER=multi_parser_user
+POSTGRES_PASSWORD=changeme
+
+# DATABASE_URL is derived from the three variables above:
+# postgresql://<POSTGRES_USER>:<POSTGRES_PASSWORD>@127.0.0.1:5432/<POSTGRES_DB>
+DATABASE_URL=postgresql://multi_parser_user:changeme@127.0.0.1:5432/multi_parser
+
+# =============================================================================
+# Twitter/X  (at least one recommended)
+# =============================================================================
+GETX_API_KEY=
+TWITTERAPI_IO_KEY=
+X_BEARER_TOKEN=
+
+# =============================================================================
+# Web search  (at least one recommended)
+# =============================================================================
+BRAVE_API_KEYS=
+TAVILY_API_KEY=
+
+# =============================================================================
+# GitHub  (optional — improves rate limits)
+# =============================================================================
+GITHUB_TOKEN=
+```
 
 ### Автоматическая установка (VPS / Linux)
 
-Скрипт `run-setup.sh` делает всё за один запуск — идеально для чистого VPS:
+Чтобы вам не пришлось все нужные команды долго вводить руками, я сделал удобный и быстрый запуск проекта через один скрипт `run-setup.sh`, который за вас:
 
-```bash
-git clone https://github.com/DennyBeus/multi-parser.git
-cd multi-parser
-
-# 1. Настроить переменные окружения
-cp .env.example .env
-nano .env    # как минимум задать POSTGRES_PASSWORD и DATABASE_URL
-
-# 2. Запустить установку (ставит зависимости, поднимает Postgres, накатывает миграции, настраивает cron)
-chmod +x run-setup.sh
-./run-setup.sh
-```
-
-Скрипт идемпотентен — безопасно запускать повторно. Он:
 1. Установит `python3-pip`, `docker.io`, `docker-compose`, `apparmor`
 2. Добавит текущего пользователя в группу `docker`
 3. Установит Python-зависимости из `requirements.txt`
@@ -126,55 +157,33 @@ chmod +x run-setup.sh
 6. Провалидирует конфиг
 7. Настроит cron (05:00 и 17:00 UTC ежедневно)
 
+От вас лишь потребуется выполнить следующие команды:
+
+```bash
+# 1. Склонировать к себе репозиторий
+git clone git@github.com:DennyBeus/multi-parser.git
+cd multi-parser
+
+# 2. Настроить переменные окружения
+cp .env.example .env
+nano .env    # как минимум задать POSTGRES_PASSWORD и DATABASE_URL
+
+# 3. Запустить установку (ставит зависимости, поднимает Postgres, накатывает миграции, настраивает cron)
+chmod +x run-setup.sh
+./run-setup.sh
+```
+
+Скрипт идемпотентен, то есть безопасно запускать повторно.
+
 ### Ручная установка
 
-```bash
-# Установить зависимости
-pip install -r requirements.txt
-
-# Запустить PostgreSQL
-docker-compose up -d
-
-# Применить миграции
-python db/migrate.py
-
-# Проверить конфиг
-python scripts/validate-config.py config/defaults
-
-# Тестовый запуск (только JSON, без БД)
-python scripts/run-pipeline.py --only rss,github --output /tmp/test-digest.json
-
-# Полный запуск с записью в БД
-python scripts/run-pipeline-db.py --hours 48 --output /tmp/digest.json --verbose
-```
-
-## Переменные окружения
-
-Все API-ключи опциональны. Пайплайн работает с тем что есть.
-
-```bash
-# PostgreSQL (обязательно для режима с БД)
-POSTGRES_PASSWORD=your_password
-DATABASE_URL=postgresql://multi_parser_user:your_password@127.0.0.1:5432/multi_parser
-
-# Twitter/X — хотя бы один рекомендуется (приоритет: getxapi > twitterapiio > official)
-GETX_API_KEY=
-TWITTERAPI_IO_KEY=
-X_BEARER_TOKEN=
-
-# Веб-поиск — хотя бы один рекомендуется (приоритет: brave > tavily)
-BRAVE_API_KEYS=k1,k2,k3    # через запятую для ротации
-TAVILY_API_KEY=
-
-# GitHub — опционально, улучшает rate limits
-GITHUB_TOKEN=
-```
+Вы так же можете выполнить все команды самостоятельно, опираясь на гайд по установке [SETUP.md](SETUP.md), но всё тоже самое делает вышеупомянутый `run-setup.sh`.
 
 ## Конфигурация
 
 ### Источники и топики
 
-- `config/defaults/sources.json` — 93 встроенных источника (21 RSS, 45 Twitter, 19 GitHub, 8 Reddit)
+- `config/defaults/sources.json` — 91 встроенных источника (21 RSS, 43 Twitter, 19 GitHub, 8 Reddit)
 - `config/defaults/topics.json` — определения топиков с поисковыми запросами и фильтрами
 
 Пользовательские оверрайды в `workspace/config/` имеют приоритет. Оверлей **мержится** с дефолтами:
@@ -216,11 +225,13 @@ PostgreSQL 16 (Docker), 3 таблицы:
 
 ## Структура проекта
 
+После первого запуска проекта, созда
+
 ```
 multi-parser/
 ├── config/
 │   ├── defaults/
-│   │   ├── sources.json          # 93 встроенных источника
+│   │   ├── sources.json          # 91 встроенных источника
 │   │   └── topics.json           # определения топиков и поисковые запросы
 │   └── schema.json               # JSON Schema для валидации
 ├── cron/
@@ -264,7 +275,7 @@ multi-parser/
 
 ## Зависимости
 
-Минимум by design — 4 пакета:
+Минимум 4 пакета:
 
 ```
 feedparser>=6.0.0        # парсинг RSS/Atom (фоллбэк на regex без него)
@@ -273,19 +284,9 @@ psycopg2-binary>=2.9.0   # драйвер PostgreSQL
 python-dotenv>=1.0.0     # загрузка .env файлов
 ```
 
-## Запуск отдельных сборщиков
-
-Каждый скрипт сбора работает автономно:
-
-```bash
-python scripts/fetch-rss.py --defaults config/defaults --output rss.json
-python scripts/fetch-twitter.py --defaults config/defaults --output twitter.json --hours 48
-python scripts/fetch-github.py --defaults config/defaults --output github.json
-python scripts/fetch-reddit.py --defaults config/defaults --output reddit.json
-python scripts/fetch-web.py --defaults config/defaults --output web.json
-```
-
 ## Тесты
+
+CI запускается на Python 3.9 и 3.12 через GitHub Actions.
 
 ```bash
 # Все тесты
@@ -295,8 +296,6 @@ python -m unittest discover -s tests -v
 python -m unittest tests/test_merge.py -v
 python -m unittest tests/test_db.py -v
 ```
-
-CI запускается на Python 3.9 и 3.12 через GitHub Actions.
 
 ## Происхождение
 
