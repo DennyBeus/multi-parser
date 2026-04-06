@@ -1,7 +1,7 @@
 # Multi-Parser
 
-<a href="https://github.com/VoltAgent/voltagent">
-     <img width="1500" height="801" alt="claude-skills" src="https://github.com/user-attachments/assets/d012a0d2-cec3-4630-ba5e-acc339dbe6cf" />
+<a href="https://github.com/DennyBeus/multi-parser">
+     <img width="1500" height="801" alt="Multi-Parser" src="https://ltdfoto.ru/images/2026/04/06/test_for_repo.jpg" />
 </a>
 
 
