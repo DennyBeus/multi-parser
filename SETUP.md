@@ -1,29 +1,5 @@
 # Настройка multi-parser на сервере
 
-> Статус: **в процессе** — не настроено, требует выполнения всех шагов
-
----
-
-## Что за проект
-
-Автоматический агрегатор техновостей. Собирает статьи из RSS, Twitter/X, GitHub, Reddit, веб-поиска. Хранит в PostgreSQL. Запускается по cron каждые 12 часов. LLM не используется в пайплайне.
-
----
-
-## Проверка инструментов на сервере (26 марта 2026)
-
-| Инструмент | Нужен | Статус |
-|---|---|---|
-| Python 3 | да | ✅ 3.11.2 |
-| pip | да | ❌ не установлен |
-| Docker | да (postgres) | ❌ не установлен |
-| psql | опционально | ❌ не установлен |
-| feedparser | опционально | ❌ не установлен |
-| psycopg2 | да (DB режим) | ❌ не установлен |
-| jsonschema | опционально | ✅ уже есть |
-
----
-
 ## Шаг 1 — Установить pip
 
 ```bash
@@ -41,10 +17,10 @@ pip3 install -r requirements.txt
 
 Устанавливает: `feedparser`, `psycopg2-binary`, `jsonschema`, `python-dotenv`.
 
-> Если Debian ругается на "externally managed":
-> ```bash
-> pip3 install --break-system-packages -r requirements.txt
-> ```
+Если Debian ругается на "externally managed":
+```bash
+pip3 install --break-system-packages -r requirements.txt
+```
 
 ---
 
@@ -54,28 +30,20 @@ pip3 install -r requirements.txt
 
 ```bash
 sudo apt install docker.io docker-compose apparmor -y
-sudo usermod -aG docker denis
+sudo usermod -aG docker user # замените user на вашего пользователя
 ```
 
 > `apparmor` нужен для запуска контейнеров: Docker использует AppArmor-профиль безопасности, и без утилиты `apparmor_parser` контейнер не стартует с ошибкой `executable file not found in $PATH`.
 
-После `usermod` группа `docker` применится только в новой сессии. Два варианта:
+После `usermod` группа `docker` применится только в новой сессии.
 
-**Вариант А — без выхода (рекомендуется):**
 ```bash
 newgrp docker
 ```
-Активирует группу в текущем терминале без выхода. Работает только в этом окне/сессии tmux.
+Активирует группу в текущем терминале без выхода. Работает только в этом окне или сессии tmux.
 
-**Вариант Б — полный перелогин:**
-Выйди из SSH и зайди снова под тем же пользователем `denis`:
-```bash
-exit   # закрываешь SSH-сессию
-# затем подключаешься заново: ssh denis@твой_сервер
-```
-Выходить под другого пользователя не нужно — ты добавил `denis` в группу `docker`, и возвращаешься тоже под `denis`.
+Проверяем что группа применилась:
 
-**Проверка что группа применилась:**
 ```bash
 groups   # должна появиться строка с "docker"
 docker ps   # не должно быть ошибки "permission denied"
@@ -86,35 +54,21 @@ docker ps   # не должно быть ошибки "permission denied"
 ## Шаг 4 — Создать .env файл
 
 ```bash
-cd ~/deploy/multi-parser
+cp .env.example .env
 nano .env
 ```
 
-Минимальный `.env` для запуска:
-```bash
-# Postgres
-DATABASE_URL=postgresql://digest:your_pass@127.0.0.1:5432/tech_digest
-POSTGRES_PASSWORD=your_pass
-
-# Twitter/X (at least one recommended)
-GETX_API_KEY=
-TWITTERAPI_IO_KEY=
-X_BEARER_TOKEN=
-
-# Web search (at least one recommended)
-BRAVE_API_KEYS=
-TAVILY_API_KEY=
-
-# GitHub (optional, improves rate limits)
-GITHUB_TOKEN=
-```
-
----
+Отредактируйте следующие поля:
+- `POSTGRES_USER` (замените в multi_parser_user в конце `user` на ваше имя)
+- `POSTGRES_PASSWORD` (установите свой пароль)
+- `DATABASE_URL` (замените multi_parser_user и changeme на ваши `POSTGRES_USER` и `POSTGRES_PASSWORD` соответсвенно)
+- `TWITTERAPI_IO_KEY`
+- `TAVILY_API_KEY` (1000 бесплатных токенов в месяц)
+- `GITHUB_TOKEN` (обходит ограничение по времени)
 
 ## Шаг 5 — Запустить PostgreSQL через Docker
 
 ```bash
-cd ~/deploy/multi-parser
 docker-compose up -d
 docker-compose ps   # проверить что запустилось
 ```
@@ -154,51 +108,6 @@ python3 scripts/run-pipeline-db.py --hours 48 --output /tmp/td-merged.json --ver
 
 ---
 
-## Доп. — Подключение DataGrip удалённо (SSH-туннель)
-
-Порт PostgreSQL намеренно привязан только к `127.0.0.1` — в интернет не торчит. Для DataGrip используй SSH-туннель: безопасно, не нужно открывать порт на сервере.
-
-**Настройка в DataGrip:**
-
-1. `New Data Source` → `PostgreSQL`
-2. Вкладка **SSH/SSL** → включи `Use SSH tunnel`
-3. Заполни SSH:
-   - Host: `IP_твоего_VPS`
-   - Port: `22`
-   - User: `denis`
-   - Auth type: `Key pair` (укажи свой приватный ключ) или `Password`
-4. Вернись на вкладку **General**, заполни:
-   - Host: `localhost`
-   - Port: `5432`
-   - Database: `tech_digest`
-   - User: `digest`
-   - Password: тот же что в `POSTGRES_PASSWORD` из `.env`
-5. `Test Connection` — должно сработать
-
-> **Предупреждение "remote host identification has changed"** — появляется если сервер пересоздавался или менялась ОС. Нажми **Yes** ("Update key") — DataGrip обновит `known_hosts` и подключится. Это не атака, если ты сам менял сервер.
-
-> DataGrip сам поднимет SSH-туннель при подключении. Ничего на сервере менять не нужно.
-
----
-
-## Доп. — Память PostgreSQL
-
-Уже настроено в `docker-compose.yml`. При 4GB RAM на VPS выставлены умеренные параметры:
-
-| Параметр | Значение | Что это |
-|---|---|---|
-| `shared_buffers` | 256MB | Основной кэш БД |
-| `work_mem` | 8MB | Память на одну сортировку/запрос |
-| `effective_cache_size` | 1GB | Подсказка планировщику |
-| `maintenance_work_mem` | 64MB | Для VACUUM и индексов |
-| `max_connections` | 20 | Максимум соединений |
-
-Для новостного дайджеста за месяц этого с большим запасом хватит — такие данные занимают обычно 100–500MB даже за год.
-
-> Если меняешь эти параметры после того как контейнер уже запущен — перезапусти: `docker compose down && docker compose up -d`
-
----
-
 ## Шаг 9 — Настроить cron (каждые 12 часов)
 
 Выполнять из папки проекта — `$(pwd)` автоматически подставит правильный путь:
@@ -219,111 +128,43 @@ crontab -l
 
 ---
 
-## Справка: зависимости по источникам
+## Доп. — Подключение DataGrip удалённо (SSH-туннель)
 
-| Источник | Что нужно |
-|---|---|
-| RSS | feedparser (опц.), без него — regex |
-| GitHub releases/trending | `GITHUB_TOKEN` |
-| Reddit | ничего (публичный API) |
-| Twitter/X | один из 3 ключей |
-| Web search | Brave или Tavily API ключ |
+Порт PostgreSQL намеренно привязан только к `127.0.0.1` — в интернет не торчит. Для DataGrip используй SSH-туннель: безопасно, не нужно открывать порт на сервере.
 
----
+**Настройка в DataGrip:**
 
-## TODO
-
-- [ ] Шаг 1: установить pip
-- [ ] Шаг 2: установить Python зависимости
-- [ ] Шаг 3: установить Docker
-- [ ] Шаг 4: создать .env и заполнить ключи
-- [ ] Шаг 5: запустить Postgres
-- [ ] Шаг 6: применить миграции
-- [ ] Шаг 7: проверить конфиг
-- [ ] Шаг 8: тестовый запуск
-- [ ] Шаг 9: настроить cron
+1. `New Data Source` → `PostgreSQL`
+2. Вкладка **SSH/SSL** → включи `Use SSH tunnel`
+3. Заполни SSH:
+   - Host: `IP_твоего_VPS`
+   - Port: `22`
+   - User: `user`
+   - Auth type: `Key pair` (укажи свой приватный ключ) или `Password`
+4. Вернись на вкладку **General**, заполни:
+   - Host: `localhost`
+   - Port: `5432`
+   - Database: `multi-parser`
+   - User: `multi-parser-user`
+   - Password: тот же что в `POSTGRES_PASSWORD` из `.env`
+5. `Test Connection` — должно сработать
 
 ---
 
-## Альтернатива: автоматическая установка через run-setup.sh
+## Доп. — Память PostgreSQL
 
-Скрипт `run-setup.sh` выполняет шаги 1–9 за один запуск. Подходит для чистого VPS.
+Уже настроено в `docker-compose.yml`. При 4GB RAM на VPS выставлены умеренные параметры:
 
-### Что он делает
+| Параметр | Значение | Что это |
+|---|---|---|
+| `shared_buffers` | 256MB | Основной кэш БД |
+| `work_mem` | 8MB | Память на одну сортировку/запрос |
+| `effective_cache_size` | 1GB | Подсказка планировщику |
+| `maintenance_work_mem` | 64MB | Для VACUUM и индексов |
+| `max_connections` | 20 | Максимум соединений |
 
-1. Проверяет наличие Python 3
-2. Если нет `.env` — копирует из `.env.example` и просит заполнить
-3. Устанавливает `python3-pip`, `docker.io`, `docker-compose`, `apparmor` (через `sudo apt-get`)
-4. Добавляет текущего пользователя в группу `docker`
-5. Устанавливает Python-зависимости (`pip3 install -r requirements.txt`)
-6. Поднимает PostgreSQL через `docker-compose up -d` и ждёт ready
-7. Применяет миграции БД (`python3 db/migrate.py`)
-8. Валидирует конфиг (`python3 scripts/validate-config.py`)
-9. Добавляет cron-задачу: `0 5,17 * * *` (05:00 и 17:00 UTC ежедневно)
+Для новостного дайджеста за месяц этого с большим запасом хватит — такие данные занимают обычно 100–500MB даже за год.
 
-### Запуск
+> Если меняешь эти параметры после того как контейнер уже запущен — перезапусти: `docker compose down && docker compose up -d`
 
-```bash
-cd ~/deploy/multi-parser
-
-# Сначала заполни .env (обязательно перед запуском):
-cp .env.example .env
-nano .env
-
-# Затем запусти:
-chmod +x run-setup.sh
-./run-setup.sh
-```
-
-### Что нужно ввести вручную
-
-| Момент | Что вводить |
-|---|---|
-| При отсутствии `.env` | Скрипт сам копирует `.env.example` → `.env` и останавливается с просьбой заполнить. Нажми **Enter** после сохранения файла. |
-| Запрос пароля `sudo` | Введи пароль текущего пользователя (если он есть в sudoers). |
-| После установки Docker | Скрипт автоматически запускает `newgrp docker` и перезапускает себя — **ничего вводить не нужно**. |
-
-### Обязательные поля в .env
-
-Без них скрипт упадёт с ошибкой:
-
-```bash
-POSTGRES_PASSWORD=your_strong_password
-DATABASE_URL=postgresql://digest:your_strong_password@127.0.0.1:5432/multi_parser
-```
-
-> Пароль в `DATABASE_URL` должен совпадать с `POSTGRES_PASSWORD`.
-
-### Опциональные ключи в .env
-
-Скрипт не проверяет их наличие, но без них часть источников не будет работать:
-
-```bash
-# Twitter/X — хотя бы один:
-GETX_API_KEY=
-TWITTERAPI_IO_KEY=
-X_BEARER_TOKEN=
-
-# Web search — хотя бы один:
-BRAVE_API_KEYS=
-TAVILY_API_KEY=
-
-# GitHub (улучшает rate limits):
-GITHUB_TOKEN=
-```
-
-### Параметр CRON_SCHEDULE
-
-По умолчанию cron запускается в `0 5,17 * * *` (05:00 и 17:00 UTC). Если нужно другое время — отредактируй строку в начале `run-setup.sh` **до запуска**:
-
-```bash
-# Строка 29 в run-setup.sh:
-CRON_SCHEDULE="0 5,17 * * *"
-```
-
-### Повторный запуск
-
-Скрипт идемпотентен: если запустить повторно, он:
-- не переустановит уже установленные пакеты
-- не продублирует cron-задачу (проверяет по пути к скрипту)
-- применит только новые миграции БД
+---
