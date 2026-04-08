@@ -23,8 +23,8 @@
 
 **English | [Русский](README_RU.md)**
 
-Hey there! My name is **Denny**, and I ran into a problem with my agent burning through too many tokens just to put together daily digests. Spending over $50 a month on all the unnecessary and sometimes outright wrong actions of an agent running off a plain SKILL.md was something I couldn't afford, so I came up with the idea for Multi-Parser — let pure code handle the parsing, and let the agent work with ready-made data in a convenient format.
-> I went into more detail about this issue in these two posts: [Post-1](https://t.me/dennyfun/300) and [Post-2](https://t.me/dennyfun/301).
+Hey there! My name is **Denny**, and I ran into a problem with my agent burning through too many tokens just to put together daily digests. Spending over $50 a month on unnecessary — and sometimes outright wrong — actions from an agent powered by a plain SKILL.md wasn't something I could justify. So I came up with Multi-Parser: let pure code handle the parsing, and let the agent work with ready-made data in a convenient format.
+> I wrote more about this in two posts: [Post-1](https://t.me/dennyfun/300) and [Post-2](https://t.me/dennyfun/301).
 
 
 ## Why Multi-Parser?
@@ -39,7 +39,7 @@ Multi-Parser is a great fit for those running Claude Code or Codex on a server v
 
 ## What It Does
 
-Multi-Parser collects AI-related news from **93 sources**, scores quality, deduplicates, and stores everything in PostgreSQL. I hand-picked sources that tend to write in-depth content rather than just two sentences in a tweet. Spammy, flooding, and reply-only accounts didn't make the cut.
+Multi-Parser collects AI-related news from **93 sources**, scores quality, deduplicates, and stores everything in PostgreSQL. I hand-picked sources that tend to write in-depth content rather than just two sentences in a tweet. Spammy, low-signal, and reply-only accounts didn't make the cut.
 
 | Source Type | Count | Examples |
 |---|---|---|
@@ -49,11 +49,11 @@ Multi-Parser collects AI-related news from **93 sources**, scores quality, dedup
 | Reddit | 8 | r/MachineLearning, r/LocalLLaMA, r/artificial... |
 | Web Search | topic-based | Brave Search or Tavily API with freshness filters |
 
-I especially focused on sources that don't just rehash the news (all of Twitter is guilty of this), but produce original thoughts or ideas, or are the de facto primary source.
+I especially focused on sources that don't just rehash the news (all of Twitter is guilty of this), but produce original thoughts or ideas, or are the original source.
 
 ## Pipeline
 
-The pipeline is dead simple and starts with a regular cron job that runs Python scripts for each source on a schedule. Then other scripts filter, deduplicate, and score the quality of the parsed data, after which a final JSON file is produced and inserted into the database.
+The pipeline is straightforward and starts with a regular cron job that runs Python scripts for each source on a schedule. Then other scripts filter, deduplicate, and score the quality of the parsed data, after which a final JSON file is produced and inserted into the database.
 ```
 cron/run-digest.sh (every 24h)
        │
@@ -114,7 +114,7 @@ All API keys are optional. The pipeline can work with whatever you have, but I s
 - `GITHUB_TOKEN` (bypasses rate limits)
 
 And make sure to edit these fields:
-- `POSTGRES_USER` (replace `user` at the end of multi_parser_user with your name)
+- `POSTGRES_USER` (replace `user` at the end of multi_parser_user with your preferred username)
 - `POSTGRES_PASSWORD` (set your own password)
 - `DATABASE_URL` (replace multi_parser_user and changeme with your `POSTGRES_USER` and `POSTGRES_PASSWORD` respectively)
 
@@ -151,7 +151,7 @@ GITHUB_TOKEN=
 
 ### Automated Setup (VPS / Linux)
 
-So you don't have to type out every command by hand, I made a convenient one-shot setup script `run-setup.sh` that will handle the following for you:
+To save you from running every command manually, I made a convenient one-shot setup script `run-setup.sh` that will handle the following for you:
 
 1. Install `python3-pip`, `docker.io`, `docker-compose`, `apparmor`
 2. Add the current user to the `docker` group
@@ -215,7 +215,7 @@ Memory tuning for 4GB RAM VPS is pre-configured in `docker-compose.yml` (256MB s
 
 ## Project Structure
 
-After the first pipeline run, a `/logs/` folder will be created in the project root where task statuses are recorded after each cron trigger. I intentionally placed this folder inside the project so that the future agent can more easily find and explain where the project logs are, and so they don't get mixed up with logs from other programs, as would happen with a system directory like `/tmp/`.
+After the first pipeline run, a `/logs/` folder will be created in the project root where task statuses are recorded after each cron trigger. I intentionally placed this folder inside the project so the agent can easily locate the logs. This also keeps them separate from other programs' logs, which would be an issue with a system directory like `/tmp/`.
 
 ```
 multi-parser/
@@ -293,4 +293,4 @@ python -m unittest tests/test_db.py -v
 
 ## Origin
 
-Multi-Parser is a reworked fork of [draco-agent/tech-news-digest](https://github.com/draco-agent/tech-news-digest) that I turned into a super cost-effective solution suitable for any user, where anyone can customize my setup to their needs or keep scaling the parser for their own AI agent.
+Multi-Parser is a reworked fork of [draco-agent/tech-news-digest](https://github.com/draco-agent/tech-news-digest) that I turned into a cost-effective solution. Anyone can customize it to their needs or keep scaling the parser for their own AI agent.
