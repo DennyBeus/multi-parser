@@ -1,24 +1,18 @@
 # Задача: ежедневный дайджест multi-parser
 
-Ты — scheduled агент. Твоя задача: сформировать ежедневный дайджест AI-новостей из базы данных проекта multi-parser и отправить его в Telegram.
+Ты — scheduled агент. Твоя задача: сформировать ежедневный дайджест AI-новостей из готового файла экспорта и отправить его в Telegram.
+
+Файл с экспортом уже создан скриптом `export-latest.py` до запуска этого агента.
 
 ## Шаги (выполняй строго по порядку)
 
-### 1. Экспорт статей из БД
-
-Запусти скрипт:
-
-```bash
-cd ~/deploy/multi-parser && python3 scripts/delivery/export-latest.py --hours 24 --min-score 6 --top-n 100 --output /tmp/digest-raw.md
-```
-
-Скрипт выведет markdown с топ-статьями за последние 24 часа.
-
-### 2. Прочитай экспортированный файл
+### 1. Прочитай экспортированный файл
 
 Прочитай `/tmp/digest-raw.md` — это список статей с заголовками, ссылками и скором.
 
-### 3. Напиши переведённый дайджест
+Если файл пустой или содержит "Статей за последние Nч не найдено" — перейди сразу к шагу 4 (отправь сообщение об отсутствии статей).
+
+### 2. Напиши переведённый дайджест
 
 Создай файл `/tmp/digest-final.md` со следующей структурой:
 
@@ -30,22 +24,25 @@ cd ~/deploy/multi-parser && python3 scripts/delivery/export-latest.py --hours 24
 - Имена людей и компаний не переводи
 - Если есть snippet — переведи и добавь (не более 2 предложений)
 
-### 4. Сгенерируй PDF
+### 3. Сгенерируй PDF
 
 ```bash
-cd ~/deploy/multi-parser && python3 scripts/delivery/generate-pdf.py --input /tmp/digest-final.md --output /tmp/digest-final.pdf
+cd $MULTI_PARSER_DIR && python3 scripts/delivery/generate-pdf.py --input /tmp/digest-final.md --output /tmp/digest-final.pdf
 ```
 
-### 5. Отправь PDF в Telegram
+### 4. Отправь результат в Telegram
 
-Используй Telegram MCP reply tool:
-- chat_id: `546745364`
-- text: краткое сообщение, например: `Дайджест за <дата>. Отобрано N статей (скор >= 6).`
-- files: `["/tmp/digest-final.pdf"]`
+**Если статьи есть** — отправь PDF через tool `mcp__plugin_telegram_telegram__reply`:
+- `chat_id`: значение из переменной окружения `TELEGRAM_CHAT_ID`
+- `text`: краткое сообщение, например: `Дайджест за <дата>. Отобрано N статей (скор >= 6).`
+- `files`: `["/tmp/digest-final.pdf"]`
+
+**Если статей нет** — отправь только текст через tool `mcp__plugin_telegram_telegram__reply`:
+- `chat_id`: значение из переменной окружения `TELEGRAM_CHAT_ID`
+- `text`: `Дайджест за <дата>: нет новых статей с качеством >= 6 за последние 24ч.`
 
 ## Правила
 
-- Если export-latest.py вернул 0 статей — отправь текстовое сообщение в Telegram: "Дайджест за <дата>: нет новых статей с качеством >= 6 за последние 24ч."
-- Не придумывай статьи — только то что есть в /tmp/digest-raw.md
+- Не придумывай статьи — только то что есть в `/tmp/digest-raw.md`
 - Не меняй ссылки
-- Если generate-pdf.py упал с ошибкой — отправь markdown-текст напрямую в Telegram (первые 4000 символов)
+- Если `generate-pdf.py` упал с ошибкой — отправь содержимое `/tmp/digest-final.md` напрямую в Telegram (первые 4000 символов)

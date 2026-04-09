@@ -34,6 +34,7 @@ CRON_SCHEDULE="0 6 * * *"
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CRON_SCRIPT="$PROJECT_DIR/cron/run-digest.sh"
+AGENT_CRON_SCRIPT="$PROJECT_DIR/cron/run-digest-agent.sh"
 LOG_DIR="$PROJECT_DIR/logs"
 
 RED='\033[0;31m'
@@ -271,6 +272,81 @@ crontab -l
 # ─────────────────────────────────────────────────────────────────────────────
 # Done
 # ─────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 7. (Optional) Set up digest agent cron
+# ─────────────────────────────────────────────────────────────────────────────
+
+echo ""
+echo "------------------------------------------"
+echo "  Optional: Telegram digest agent"
+echo "------------------------------------------"
+echo ""
+echo "  The digest agent runs after the pipeline, translates articles to Russian,"
+echo "  generates a PDF and sends it to your Telegram via Claude AI."
+echo ""
+echo "  Requirements:"
+echo "    - Claude Code CLI installed and authorized (claude auth login)"
+echo "    - TELEGRAM_CHAT_ID  — message @userinfobot on Telegram to find yours"
+echo ""
+read -r -p "  Set up digest agent? (y/N): " SETUP_AGENT
+SETUP_AGENT="${SETUP_AGENT:-N}"
+
+if [[ "$SETUP_AGENT" =~ ^[Yy]$ ]]; then
+
+    # Check claude CLI
+    if ! command -v claude &>/dev/null; then
+        warn "claude command not found. Install Claude Code first: https://claude.ai/code"
+        warn "Skipping agent setup. You can re-run this script later."
+    else
+        ok "claude CLI found: $(claude --version 2>/dev/null | head -1 || echo 'ok')"
+
+        # Check claude is authorized (uses subscription, not API key)
+        if ! claude whoami &>/dev/null 2>&1; then
+            warn "Claude Code is not authorized. Run: claude auth login"
+            warn "Skipping agent setup. Re-run this script after authorizing."
+            SETUP_AGENT="N"
+        else
+            ok "Claude Code authorized"
+        fi
+
+        if [[ "$SETUP_AGENT" =~ ^[Yy]$ ]] && [ -z "${TELEGRAM_CHAT_ID:-}" ]; then
+            read -r -p "  Enter TELEGRAM_CHAT_ID: " INPUT_CHAT_ID
+            if [ -n "$INPUT_CHAT_ID" ]; then
+                echo "TELEGRAM_CHAT_ID=$INPUT_CHAT_ID" >> "$PROJECT_DIR/.env"
+                export TELEGRAM_CHAT_ID="$INPUT_CHAT_ID"
+                ok "TELEGRAM_CHAT_ID saved to .env"
+            else
+                warn "TELEGRAM_CHAT_ID not provided — skipping agent setup"
+                SETUP_AGENT="N"
+            fi
+        fi
+
+        if [[ "$SETUP_AGENT" =~ ^[Yy]$ ]]; then
+            chmod +x "$AGENT_CRON_SCRIPT"
+
+            # Agent runs 2 hours after pipeline (08:00 UTC)
+            AGENT_CRON_SCHEDULE="0 8 * * *"
+            AGENT_CRON_LINE="$AGENT_CRON_SCHEDULE $AGENT_CRON_SCRIPT >> $LOG_DIR/digest-agent.log 2>&1"
+
+            if crontab -l 2>/dev/null | grep -v '^\s*#' | grep -qF "$AGENT_CRON_SCRIPT"; then
+                ok "Agent cron job already present — skipping"
+            else
+                (crontab -l 2>/dev/null; echo "$AGENT_CRON_LINE") | crontab -
+                ok "Agent cron job added: $AGENT_CRON_LINE"
+            fi
+
+            echo ""
+            echo "  To disable the agent later, comment out the agent line in crontab:"
+            echo "    crontab -e"
+        fi
+    fi
+else
+    info "Skipping digest agent setup."
+    echo "  To set it up later, re-run: ./run-setup.sh"
+    echo "  Or add manually to crontab:"
+    echo "    0 8 * * * $AGENT_CRON_SCRIPT >> $LOG_DIR/digest-agent.log 2>&1"
+fi
 
 echo ""
 echo "=========================================="
