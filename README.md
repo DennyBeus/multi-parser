@@ -219,6 +219,8 @@ After the first pipeline run, a `/logs/` folder will be created in the project r
 
 ```
 multi-parser/
+├── agent-instructions/
+│   └── digest-prompt.md          # Scheduled agent instructions (export → translate → deliver)
 ├── assets/
 │   └── readme_image.jpg          # README image
 ├── config/
@@ -249,17 +251,18 @@ multi-parser/
 │   ├── cleanup-db.py             # manual DB cleanup
 │   ├── source-health.py          # source availability checker
 │   ├── validate-config.py        # config validation
-│   └── delivery/                 # Phase 2: output formatters
-│       ├── generate-pdf.py
-│       ├── sanitize-html.py
-│       └── send-email.py
+│   └── delivery/                 # Output formatters (DB → digest)
+│       ├── export-latest.py      # PostgreSQL → markdown
+│       ├── generate-pdf.py       # markdown → PDF (Russian typesetting)
+│       ├── sanitize-html.py      # HTML sanitizer
+│       └── send-email.py         # Email delivery
 ├── tests/
 │   ├── test_config.py
 │   ├── test_db.py
 │   ├── test_merge.py
 │   └── fixtures/                 # sample data for each source type
 ├── docker-compose.yml            # PostgreSQL 16 + tuning
-├── requirements.txt              # 4 dependencies
+├── requirements.txt              # 5 dependencies + system libs
 ├── run-setup.sh                  # one-shot VPS setup
 ├── SETUP.md                      # step-by-step manual setup guide
 ├── LICENSE                       # project license
@@ -269,14 +272,22 @@ multi-parser/
 
 ## Dependencies
 
-Just 4 packages:
+Python packages (5):
 
 ```
 feedparser>=6.0.0        # RSS/Atom parsing (falls back to regex without it)
 jsonschema>=4.0.0        # config validation
 psycopg2-binary>=2.9.0   # PostgreSQL driver
 python-dotenv>=1.0.0     # .env file loading
+weasyprint>=68.0         # PDF generation (delivery scripts)
 ```
+
+System dependencies (for WeasyPrint):
+```bash
+sudo apt install fonts-noto-cjk libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0
+```
+
+See [SETUP.md](SETUP.md) for details.
 
 ## Tests
 

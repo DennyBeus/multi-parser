@@ -146,6 +146,20 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 1b. System dependencies for WeasyPrint
+# ─────────────────────────────────────────────────────────────────────────────
+
+echo ""
+info "Installing system dependencies for WeasyPrint (PDF generation)..."
+
+install_with_sudo fonts-noto-cjk
+install_with_sudo libpango-1.0-0
+install_with_sudo libpangoft2-1.0-0
+install_with_sudo libpangocairo-1.0-0
+
+ok "System libraries installed"
+
+# ─────────────────────────────────────────────────────────────────────────────
 # 2. Python dependencies
 # ─────────────────────────────────────────────────────────────────────────────
 

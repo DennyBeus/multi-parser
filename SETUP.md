@@ -1,10 +1,17 @@
 # Настройка multi-parser на сервере
 
-## Шаг 1 — Установить pip
+## Шаг 1 — Установить pip и системные зависимости
 
 ```bash
+sudo apt update
 sudo apt install python3-pip -y
+
+# Системные зависимости для weasyprint и PDF-генерации
+sudo apt install fonts-noto-cjk libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 -y
 ```
+
+> `fonts-noto-cjk` — шрифты для корректной отрисовки русского и восточноазиатских текстов.
+> `libpango*` — библиотеки текстовой разметки, необходимы для WeasyPrint при генерации PDF.
 
 ---
 
@@ -15,12 +22,14 @@ cd ~/deploy/multi-parser
 pip3 install -r requirements.txt
 ```
 
-Устанавливает: `feedparser`, `psycopg2-binary`, `jsonschema`, `python-dotenv`.
+Устанавливает: `feedparser`, `psycopg2-binary`, `jsonschema`, `python-dotenv`, `weasyprint`.
 
 Если Debian ругается на "externally managed":
 ```bash
 pip3 install --break-system-packages -r requirements.txt
 ```
+
+> Рекомендуется использовать `--break-system-packages` вместо `sudo pip3` — это безопаснее для вашей системы.
 
 ---
 
@@ -104,6 +113,12 @@ python3 scripts/run-pipeline.py --only rss,github --output /tmp/test-digest.json
 Если работает — полный запуск с БД:
 ```bash
 python3 scripts/run-pipeline-db.py --hours 48 --output /tmp/td-merged.json --verbose
+```
+
+Опционально — тестирование export и PDF-генерации:
+```bash
+python3 scripts/delivery/export-latest.py --hours 48 --min-score 4 --output /tmp/test-articles.md
+python3 scripts/delivery/generate-pdf.py --input /tmp/test-articles.md --output /tmp/test-digest.pdf
 ```
 
 ---

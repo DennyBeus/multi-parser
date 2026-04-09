@@ -13,6 +13,16 @@ psycopg2-binary>=2.9.0
 # Load .env file automatically (required)
 python-dotenv>=1.0.0
 
+# PDF generation for deliverables (required for delivery scripts)
+weasyprint>=68.0
+
+# System dependencies (install separately, not via pip):
+# - fonts-noto-cjk      (apt install fonts-noto-cjk) — CJK fonts for WeasyPrint
+# - libpango-1.0-0      (apt install libpango-1.0-0) — Pango library
+# - libpangoft2-1.0-0   (apt install libpangoft2-1.0-0) — Pango FreeType2
+# - libpangocairo-1.0-0 (apt install libpangocairo-1.0-0) — Pango Cairo backend
+# See SETUP.md for full installation instructions.
+
 # Standard library modules used:
 # - json
 # - urllib.request

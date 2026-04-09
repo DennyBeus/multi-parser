@@ -44,6 +44,12 @@ python scripts/fetch-reddit.py --defaults config/defaults --output reddit.json
 python scripts/fetch-web.py --defaults config/defaults --output web.json
 ```
 
+### Export and generate deliverables
+```bash
+python scripts/delivery/export-latest.py --hours 24 --min-score 6 --top-n 100 --output /tmp/articles.md
+python scripts/delivery/generate-pdf.py --input /tmp/articles.md --output /tmp/digest.pdf
+```
+
 ### Database setup
 ```bash
 docker-compose up -d                    # Start Postgres
@@ -129,9 +135,25 @@ Cross-run dedup: `--db-dedup` flag queries `seen_urls` table (last 14 days) inst
 
 All scripts under `scripts/` can run standalone with their own CLI args or be orchestrated by `run-pipeline.py`. They share a common JSON output structure with `sources[]` containing `articles[]`.
 
-### Delivery scripts (Phase 2)
+### Agent Instructions
 
-`scripts/delivery/` contains send-email.py, generate-pdf.py, sanitize-html.py — reserved for future `Postgres -> LLM -> delivery` flow.
+`agent-instructions/` contains scheduled agent prompts and workflows:
+
+- `digest-prompt.md` — Instructions for the daily digest scheduled agent (exports articles from DB, translates to Russian, generates PDF, sends to Telegram).
+
+### Delivery scripts
+
+`scripts/delivery/` contains scripts for converting DB content into deliverables:
+
+- `export-latest.py` — Exports articles from PostgreSQL as markdown (filters by hours, min_score, top_n, groups by source_type). Strips emoji from titles/snippets.
+- `generate-pdf.py` — Converts markdown to PDF with Russian typesetting support (tuned fonts, margins, line-height for compact output).
+- `send-email.py`, `sanitize-html.py` — Reserved for future email delivery pipeline.
+
+Usage example (digest agent flow):
+```bash
+python3 export-latest.py --hours 24 --min-score 6 --top-n 100 --output /tmp/raw.md
+python3 generate-pdf.py --input /tmp/raw.md --output /tmp/digest.pdf
+```
 
 ### Test structure
 

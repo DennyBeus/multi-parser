@@ -219,6 +219,8 @@ PostgreSQL 16 (Docker), 3 таблицы:
 
 ```
 multi-parser/
+├── agent-instructions/
+│   └── digest-prompt.md          # Инструкции для scheduled-агента (экспорт → перевод → отправка)
 ├── assets/
 │   └── readme_image.jpg          # изображение для README
 ├── config/
@@ -249,17 +251,18 @@ multi-parser/
 │   ├── cleanup-db.py             # ручная очистка БД
 │   ├── source-health.py          # проверка доступности источников
 │   ├── validate-config.py        # валидация конфига
-│   └── delivery/                 # Фаза 2: форматирование вывода
-│       ├── generate-pdf.py
-│       ├── sanitize-html.py
-│       └── send-email.py
+│   └── delivery/                 # Форматирование вывода (БД → дайджест)
+│       ├── export-latest.py      # PostgreSQL → markdown
+│       ├── generate-pdf.py       # markdown → PDF (русская типография)
+│       ├── sanitize-html.py      # санитайзер HTML
+│       └── send-email.py         # отправка по email
 ├── tests/
 │   ├── test_config.py
 │   ├── test_db.py
 │   ├── test_merge.py
 │   └── fixtures/                 # тестовые данные для каждого типа источника
 ├── docker-compose.yml            # PostgreSQL 16 + тюнинг
-├── requirements.txt              # 4 зависимости
+├── requirements.txt              # 5 зависимостей + системные библиотеки
 ├── run-setup.sh                  # установка на VPS за один запуск
 ├── SETUP.md                      # пошаговый гайд по ручной установке
 ├── LICENSE                       # лицензия проекта
@@ -269,14 +272,22 @@ multi-parser/
 
 ## Зависимости
 
-Минимум 4 пакета:
+Python-пакеты (5):
 
 ```
 feedparser>=6.0.0        # парсинг RSS/Atom (фоллбэк на regex без него)
 jsonschema>=4.0.0        # валидация конфига
 psycopg2-binary>=2.9.0   # драйвер PostgreSQL
 python-dotenv>=1.0.0     # загрузка .env файлов
+weasyprint>=68.0         # генерация PDF (скрипты доставки)
 ```
+
+Системные зависимости (для WeasyPrint):
+```bash
+sudo apt install fonts-noto-cjk libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0
+```
+
+Подробнее в [SETUP.md](SETUP.md).
 
 ## Тесты
 
