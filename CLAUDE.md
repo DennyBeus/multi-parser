@@ -74,7 +74,7 @@ pip install -r requirements.txt
 `run-pipeline-db.py` wraps the original pipeline with DB storage:
 
 ```
-  cron/run-digest.sh (every 24h)
+  cron/run-parser.sh (every 24h)
         │
         ▼
   run-pipeline-db.py

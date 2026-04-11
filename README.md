@@ -55,7 +55,7 @@ I especially focused on sources that don't just rehash the news (all of Twitter 
 
 The pipeline is straightforward and starts with a regular cron job that runs Python scripts for each source on a schedule. Then other scripts filter, deduplicate, and score the quality of the parsed data, after which a final JSON file is produced and inserted into the database.
 ```
-cron/run-digest.sh (every 24h)
+cron/run-parser.sh (every 24h)
        │
        ▼
  run-pipeline-db.py
@@ -229,7 +229,7 @@ multi-parser/
 │   │   └── topics.json           # topic definitions & search queries
 │   └── schema.json               # JSON Schema for config validation
 ├── cron/
-│   └── run-digest.sh             # cron wrapper (every 24h)
+│   └── run-parser.sh             # cron wrapper (every 24h)
 ├── db/
 │   ├── migrate.py                # migration runner
 │   └── migrations/

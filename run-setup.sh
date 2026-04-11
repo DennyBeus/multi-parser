@@ -33,7 +33,7 @@ CRON_SCHEDULE="0 6 * * *"
 # ─────────────────────────────────────────────────────────────────────────────
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CRON_SCRIPT="$PROJECT_DIR/cron/run-digest.sh"
+CRON_SCRIPT="$PROJECT_DIR/cron/run-parser.sh"
 AGENT_CRON_SCRIPT="$PROJECT_DIR/cron/run-digest-agent.sh"
 LOG_DIR="$PROJECT_DIR/logs"
 

@@ -2,7 +2,7 @@
 # Cron wrapper for multi-parser pipeline with Postgres storage.
 #
 # Install in crontab:
-#   0 6 * * * /home/denis/deploy/multi-parser/cron/run-digest.sh >> /home/denis/deploy/multi-parser/logs/cron.log 2>&1
+#   0 6 * * * /home/denis/deploy/multi-parser/cron/run-parser.sh >> /home/denis/deploy/multi-parser/logs/cron.log 2>&1
 #
 set -euo pipefail
 

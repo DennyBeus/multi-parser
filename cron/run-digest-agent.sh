@@ -2,7 +2,7 @@
 # =============================================================================
 # run-digest-agent.sh — daily digest agent for multi-parser
 #
-# Runs after run-digest.sh (pipeline). Exports articles from DB, then
+# Runs after run-parser.sh (pipeline). Exports articles from DB, then
 # launches Claude agent which translates, generates PDF and sends to Telegram.
 #
 # Install in crontab (2 hours after pipeline, e.g. at 08:00 UTC):

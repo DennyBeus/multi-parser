@@ -129,9 +129,9 @@ python3 scripts/delivery/generate-pdf.py --input /tmp/test-articles.md --output 
 
 ```bash
 cd ~/deploy/multi-parser
-chmod +x cron/run-digest.sh
+chmod +x cron/run-parser.sh
 mkdir -p logs
-(crontab -l 2>/dev/null; echo "0 6 * * * $(pwd)/cron/run-digest.sh >> $(pwd)/logs/cron.log 2>&1") | crontab -
+(crontab -l 2>/dev/null; echo "0 6 * * * $(pwd)/cron/run-parser.sh >> $(pwd)/logs/cron.log 2>&1") | crontab -
 ```
 
 Проверить что добавилось:
@@ -139,7 +139,7 @@ mkdir -p logs
 crontab -l
 ```
 
-> Очистка БД встроена в `cron/run-digest.sh` — после каждого успешного запуска pipeline автоматически удаляются статьи старше 90 дней и `seen_urls` старше 180 дней. Отдельной cron-задачи не нужно.
+> Очистка БД встроена в `cron/run-parser.sh` — после каждого успешного запуска pipeline автоматически удаляются статьи старше 90 дней и `seen_urls` старше 180 дней. Отдельной cron-задачи не нужно.
 
 ---
 
