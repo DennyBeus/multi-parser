@@ -5,8 +5,8 @@
 # Runs after run-parser.sh (pipeline). Exports articles from DB, then
 # launches Claude agent which translates, generates PDF and sends to Telegram.
 #
-# Install in crontab (2 hours after pipeline, e.g. at 08:00 UTC):
-#   0 8 * * * /path/to/multi-parser/cron/run-digest-agent.sh >> /path/to/multi-parser/logs/digest-agent.log 2>&1
+# Install in crontab (06:30 UTC):
+#   30 6 * * * /path/to/multi-parser/cron/run-digest-agent.sh >> /path/to/multi-parser/logs/digest-agent.log 2>&1
 #
 # Required env vars (set in .env):
 #   DATABASE_URL       — Postgres connection string

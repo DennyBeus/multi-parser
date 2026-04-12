@@ -325,8 +325,8 @@ if [[ "$SETUP_AGENT" =~ ^[Yy]$ ]]; then
         if [[ "$SETUP_AGENT" =~ ^[Yy]$ ]]; then
             chmod +x "$AGENT_CRON_SCRIPT"
 
-            # Agent runs 2 hours after pipeline (08:00 UTC)
-            AGENT_CRON_SCHEDULE="0 8 * * *"
+            # Agent runs in 30 min after pipeline (06:30 UTC)
+            AGENT_CRON_SCHEDULE="30 6 * * *"
             AGENT_CRON_LINE="$AGENT_CRON_SCHEDULE $AGENT_CRON_SCRIPT >> $LOG_DIR/digest-agent.log 2>&1"
 
             if crontab -l 2>/dev/null | grep -v '^\s*#' | grep -qF "$AGENT_CRON_SCRIPT"; then
@@ -345,7 +345,7 @@ else
     info "Skipping digest agent setup."
     echo "  To set it up later, re-run: ./run-setup.sh"
     echo "  Or add manually to crontab:"
-    echo "    0 8 * * * $AGENT_CRON_SCRIPT >> $LOG_DIR/digest-agent.log 2>&1"
+    echo "    30 6 * * * $AGENT_CRON_SCRIPT >> $LOG_DIR/digest-agent.log 2>&1"
 fi
 
 echo ""
